@@ -87,15 +87,6 @@ public class CameraController : MonoBehaviour
             if (lookAtTarget == null) lookAtTarget = followTarget;
             #endregion
 
-            if (!Application.isPlaying)
-            {
-                headPos = followTarget.transform.position + new Vector3(0, headHeight, 0);
-                lookatPos = headPos + new Vector3(0, lookAtOffset.y, 0) + (transform.right * lookAtOffset.x);
-                farPos = lookatPos + new Vector3(0, 0, -zoomFurthest);
-                nearPos = Vector3.Lerp(farPos, lookatPos, zoomClosest);
-                zoomPos = Vector3.Lerp(farPos, nearPos, zoomCurrent);
-            }
-
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(nearPos, .5f);
             Gizmos.DrawWireSphere(farPos, .5f);
