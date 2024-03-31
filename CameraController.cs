@@ -1,19 +1,25 @@
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[ExecuteAlways]
 public class CameraController : MonoBehaviour
 {
     public Transform followTarget, lookAtTarget;
 
-    public float headHeight;
-    public Vector2 lookAtOffset;
+    [SerializeField] float headHeight;
+    [SerializeField] Vector2 lookAtOffset;
     [Range(0, 1)]
-    public float zoomClosest, zoomCurrent;
-    public float zoomFurthest;
+    [SerializeField] float zoomClosest, zoomCurrent;
+    [SerializeField] float zoomFurthest;
 
-    [HideInInspector]
-    public Vector3 headPos, lookatPos, nearPos, farPos, zoomPos;
+    [Header("Collision")]
+    [SerializeField] float rayWidth = .5f;
+    [SerializeField] LayerMask colMask;
+
+    
+    Vector3 headPos, lookatPos, nearPos, farPos, zoomPos;
     float mouseX;
     float mouseY;
 
@@ -58,8 +64,17 @@ public class CameraController : MonoBehaviour
             nearPos = Vector3.Lerp(farPos, lookatPos, zoomClosest);
             zoomPos = Vector3.Lerp(farPos, nearPos, zoomCurrent);
 
-            //Move to zoomPosition
-            transform.position = zoomPos;
+            RaycastHit hit;
+            if (Physics.SphereCast(transform.position, rayWidth, -transform.forward, out hit, Vector3.Distance(transform.position, zoomPos), colMask))
+            {
+                //Move to hit Positon
+                transform.position = hit.point + hit.normal * rayWidth;
+            }
+            else
+            {
+                //Move to zoomPosition
+                transform.position = zoomPos;
+            }
 
         }
     }
@@ -87,7 +102,7 @@ public class CameraController : MonoBehaviour
             Gizmos.DrawWireSphere(farPos, .5f);
 
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(zoomPos, .25f);
+            Gizmos.DrawWireSphere(zoomPos, rayWidth);
             Gizmos.DrawWireSphere(lookatPos, .25f);
 
             Gizmos.color = Color.black;
@@ -95,8 +110,6 @@ public class CameraController : MonoBehaviour
 
             Gizmos.color = Color.blue;
             Gizmos.DrawLine(farPos, lookatPos);
-
-
         }
     }
 }
