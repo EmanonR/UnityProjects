@@ -2,25 +2,25 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
+[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(CapsuleCollider))]
 public class PlayerController : MonoBehaviour
 {
     //These are classes to make them collapsable in Inspector
     public MovementClass Movement;
     public GroundedClass Grounded;
 
-    new public Transform camera;
+    public Transform overrideCamera;
 
     bool isGrounded;
-    RaycastHit groundedHit;
-    Rigidbody rb;
     float currentSpeed;
     float horizontalInput, verticalInput;
-    Vector3 movementDir;
     float targetAngle;
-
-    public float turnSmoothTime = .1f;
     float turnSmoothVelocity;
+    RaycastHit groundedHit;
+    Rigidbody rb;
+    Vector3 movementDir;
+
 
     void Start()
     {
@@ -78,8 +78,10 @@ public class PlayerController : MonoBehaviour
     {
         if (movementDir.magnitude > .1f)
         {
-            targetAngle = Mathf.Atan2(movementDir.x, movementDir.z) * Mathf.Rad2Deg + camera.eulerAngles.y;
-            
+            if (overrideCamera == null)
+                targetAngle = Mathf.Atan2(movementDir.x, movementDir.z) * Mathf.Rad2Deg + Camera.main.transform.eulerAngles.y;
+            else
+                targetAngle = Mathf.Atan2(movementDir.x, movementDir.z) * Mathf.Rad2Deg + overrideCamera.transform.eulerAngles.y;
 
             Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
             moveDir = moveDir.normalized;
@@ -95,7 +97,7 @@ public class PlayerController : MonoBehaviour
 
     void UpdatePlayerRotation()
     {
-        float rotationAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+        float rotationAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, Movement.turnSmoothTime);
         transform.rotation = Quaternion.Euler(0f, rotationAngle, 0f);
     }
 
@@ -122,13 +124,14 @@ public class PlayerController : MonoBehaviour
     {
         public float walkSpeed = 5, runSpeed = 10;
         public float jumpPower = 7;
+        public float turnSmoothTime = .1f;
     }
 
     [System.Serializable]
     public class GroundedClass
     {
-        public float groundRayLength = -1f;
-        public float groundRayWidth = 1f, groundRayHeight = 1f;
+        public float groundRayLength = .2f;
+        public float groundRayWidth = .1f, groundRayHeight = .1f;
         public LayerMask groundedMask;
     }
 }
