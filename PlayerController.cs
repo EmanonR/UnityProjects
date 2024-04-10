@@ -11,9 +11,9 @@ public class PlayerController : MonoBehaviour
     public GroundedClass Grounded;
 
     public Transform overrideCamera;
+    public Transform companion;
 
     bool isGrounded;
-    float currentSpeed;
     float horizontalInput, verticalInput;
     float targetAngle;
     float turnSmoothVelocity;
@@ -21,8 +21,16 @@ public class PlayerController : MonoBehaviour
     Rigidbody rb;
     Vector3 movementDir;
 
+    [HideInInspector] public float currentSpeed;
 
-    void Start()
+    public StateMachine state;
+    public enum StateMachine
+    {
+        idle,
+        holding,
+    }
+
+    void Awake()
     {
         rb = GetComponent<Rigidbody>();
     }
@@ -30,14 +38,29 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         HandleSettings();
-        UpdatePlayerRotation();
         UpdateGroundedStatus();
         HandleJump();
+
+        float dist = Vector3.Distance(transform.position, companion.position);
+
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            if (state == StateMachine.holding)
+            {
+                state = StateMachine.idle;
+            }
+            else if (dist < 2f)
+            {
+                state = StateMachine.holding;
+            }
+        }
     }
 
     private void FixedUpdate()
     {
-        if (movementDir.magnitude != 0) HandleMovement();
+        HandleMovement();
+        HandleRotation();
     }
 
     void HandleSettings()
@@ -48,13 +71,16 @@ public class PlayerController : MonoBehaviour
         movementDir = new Vector3(horizontalInput, 0, verticalInput).normalized;
 
         //Set current speed
-        currentSpeed = Input.GetKey(KeyCode.LeftShift) ? Movement.runSpeed : Movement.walkSpeed;
+        if (movementDir.magnitude > .1f)
+            currentSpeed = Input.GetKey(KeyCode.LeftShift) ? Movement.runSpeed : Movement.walkSpeed;
+        else
+            currentSpeed = 0;
     }
 
     void UpdateGroundedStatus()
     {
         //create the ray
-        Ray ray = new Ray(transform.position + new Vector3(0, Grounded.groundRayHeight, 0), Vector3.down);
+        Ray ray = new (rb.transform.position + new Vector3(0, Grounded.groundRayHeight, 0), Vector3.down);
         //Spherecast down, this is simple to understand
         Physics.SphereCast(ray, Grounded.groundRayWidth, out groundedHit, Grounded.groundRayLength, Grounded.groundedMask);
 
@@ -91,14 +117,14 @@ public class PlayerController : MonoBehaviour
         }
         else if (rb.velocity.magnitude > 0.1f && isGrounded)
         {
-            rb.velocity = rb.velocity * 0.8f;
+            rb.velocity = new Vector3(rb.velocity.x * .8f, rb.velocity.y, rb.velocity.z * .8f);
         }
     }
 
-    void UpdatePlayerRotation()
+    void HandleRotation()
     {
-        float rotationAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, Movement.turnSmoothTime);
-        transform.rotation = Quaternion.Euler(0f, rotationAngle, 0f);
+        float rotationAngle = Mathf.SmoothDampAngle(rb.transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, Movement.turnSmoothTime);
+        rb.transform.rotation = Quaternion.Euler(0f, rotationAngle, 0f);
     }
 
 
