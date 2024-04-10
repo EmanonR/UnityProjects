@@ -11,7 +11,6 @@ public class PlayerController : MonoBehaviour
     public GroundedClass Grounded;
 
     public Transform overrideCamera;
-    public Transform companion;
 
     bool isGrounded;
     float horizontalInput, verticalInput;
@@ -23,12 +22,6 @@ public class PlayerController : MonoBehaviour
 
     [HideInInspector] public float currentSpeed;
 
-    public StateMachine state;
-    public enum StateMachine
-    {
-        idle,
-        holding,
-    }
 
     void Awake()
     {
@@ -39,22 +32,7 @@ public class PlayerController : MonoBehaviour
     {
         HandleSettings();
         UpdateGroundedStatus();
-        HandleJump();
-
-        float dist = Vector3.Distance(transform.position, companion.position);
-
-
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            if (state == StateMachine.holding)
-            {
-                state = StateMachine.idle;
-            }
-            else if (dist < 2f)
-            {
-                state = StateMachine.holding;
-            }
-        }
+        HandleJump();   
     }
 
     private void FixedUpdate()
