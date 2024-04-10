@@ -33,15 +33,12 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    private void Update()
-    {
-        zoomCurrent = Mathf.Clamp(zoomCurrent += (Input.mouseScrollDelta.y * .1f), 0, 1);
-    }
-
     private void LateUpdate()
     {
         if (followTarget || lookAtTarget != null)
         {
+            zoomCurrent = Mathf.Clamp(zoomCurrent += (Input.mouseScrollDelta.y * .1f), 0, 1);
+
             //position of head
             headPos = followTarget.transform.position + new Vector3(0, headHeight, 0);
             lookatPos = headPos + new Vector3(0, lookAtOffset.y, 0) + (transform.right * lookAtOffset.x);
@@ -67,12 +64,12 @@ public class CameraController : MonoBehaviour
             if (Physics.SphereCast(transform.position, rayWidth, -transform.forward, out hit, Vector3.Distance(transform.position, zoomPos), colMask))
             {
                 //Move to hit Positon
-                transform.position = hit.point + hit.normal * rayWidth;
+                transform.position = Vector3.Lerp(transform.position, hit.point + hit.normal * rayWidth, .9f);
             }
             else
             {
                 //Move to zoomPosition
-                transform.position = zoomPos;
+                transform.position = Vector3.Lerp(transform.position, zoomPos, .9f);
             }
 
         }
