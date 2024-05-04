@@ -58,9 +58,9 @@ public class PlayerControllerSC : MonoBehaviour
         Vector2 br = transform.position + new Vector3(Grounded.groundRayWidth, Grounded.groundRayBot);
 
         //Spherecast down, this is simple to understand
-        groundedHit = Physics2D.Raycast(tl, (tl - br).normalized, Vector2.Distance(tl, br), Grounded.groundedMask);
+        groundedHit = Physics2D.Raycast(tl, (br - tl).normalized, Vector2.Distance(tl, br), Grounded.groundedMask);
         if (groundedHit.collider == null)
-            groundedHit = Physics2D.Raycast(tr, (tr - bl).normalized, Vector2.Distance(tr, bl), Grounded.groundedMask);
+            groundedHit = Physics2D.Raycast(tr, (bl - tr).normalized, Vector2.Distance(tr, bl), Grounded.groundedMask);
 
         //set grounded based on if collider
         Grounded.isGrounded = groundedHit.collider != null;
@@ -113,17 +113,16 @@ public class PlayerControllerSC : MonoBehaviour
 
 
         Gizmos.color = Color.red;
-        Gizmos.DrawLine(tl, br);
-        Gizmos.DrawLine(tr, bl);
+        Gizmos.DrawRay(tl, (br - tl).normalized * Vector2.Distance(tl, br));
+        Gizmos.DrawRay(tr, (bl - tr).normalized * Vector2.Distance(tl, br));
     }
 
 
     [System.Serializable]
     public class MovementClass
     {
-        public float walkSpeed = 5, runSpeed = 10;
-        public float jumpPower = 7;
-        public float turnSmoothTime = .1f;
+        public float walkSpeed = 4, runSpeed = 8;
+        public float jumpPower = 8;
     }
 
     [System.Serializable]
