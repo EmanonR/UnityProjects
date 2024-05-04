@@ -1,4 +1,3 @@
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -23,7 +22,7 @@ public class CameraController2D : MonoBehaviour
         {
             cam = GetComponent<Camera>();
 
-            zoomCurrent = Mathf.Clamp(zoomCurrent += (Input.mouseScrollDelta.y * .1f), 0, 1);
+            zoomCurrent = Mathf.Clamp(zoomCurrent -= (Input.mouseScrollDelta.y * .1f), 0, 1);
 
             //position of head
             headPos = followTarget.transform.position + new Vector3(0, headHeight, 0);
@@ -43,7 +42,7 @@ public class CameraController2D : MonoBehaviour
         {
 
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(lookatPos, .25f);
+            Gizmos.DrawWireSphere(lookatPos, .15f);
 
             Gizmos.color = Color.black;
             Gizmos.DrawWireSphere(headPos, .25f);
