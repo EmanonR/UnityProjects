@@ -118,14 +118,26 @@ public class PlayerMovement : MonoBehaviour
 
     void HandleMovement()
     {
-        if (horizontalInput != 0f)
+        switch (horizontalInput)
         {
-            rb.linearVelocity = new Vector2(horizontalInput * currentSpeed,
+            case > 0:   //Right
+                if (Collision.onRight) return;
+                rb.linearVelocity = new Vector2(horizontalInput * currentSpeed,
                                         rb.linearVelocity.y);
-        }
-        else if (rb.linearVelocity.magnitude > 0.1f && Grounded.isGrounded)
-        {
-            rb.linearVelocity = new Vector3(rb.linearVelocity.x * .8f, rb.linearVelocity.y);
+                break;
+
+            case < 0:   //Left
+                if (Collision.onLeft) return;
+                rb.linearVelocity = new Vector2(horizontalInput * currentSpeed,
+                                        rb.linearVelocity.y);
+                break;
+
+            default:    //Default
+                if (rb.linearVelocity.magnitude > 0.1f && Grounded.isGrounded)
+                {
+                    rb.linearVelocity = new Vector3(rb.linearVelocity.x * .8f, rb.linearVelocity.y);
+                }
+                break;
         }
     }
 
