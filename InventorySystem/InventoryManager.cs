@@ -65,16 +65,23 @@ public class InventoryManager : MonoBehaviour
         //if we have itemSlots
         if (listToAdd.Count != 0)
         {
-            //Check for itemslot with item
-            for (int i = 0; i < listToAdd.Count; i++)
-            {
-                //If found, increase amount in respective itemslot
-                if (listToAdd[i].itemInList == itemToAdd)
+            if (itemToAdd.stackable)
+                //Check for itemslot with item
+                for (int i = 0; i < listToAdd.Count; i++)
                 {
-                    listToAdd[i].amount++;
-                    return;
+                    //If found, increase amount in respective itemslot
+                    if (listToAdd[i].itemInList == itemToAdd)
+                    {
+                        listToAdd[i].amount++;
+                        return;
+                    }
                 }
-            }
+
+            //Make new itemslot and add item to it with a count of 1
+            ItemSlotClass newItemSlot = new ItemSlotClass();
+            newItemSlot.amount = 1;
+            newItemSlot.itemInList = itemToAdd;
+            listToAdd.Add(newItemSlot);
         }
         else
         {
