@@ -51,7 +51,7 @@ public class InventoryUI : MenuManager
                 }
                 break;
             case Item.ItemType.money:
-                moneyText.text = inventoryManager.money.ToString();
+                moneyText.text = "Money: " + inventoryManager.money.ToString();
                 break;
         }
     }
