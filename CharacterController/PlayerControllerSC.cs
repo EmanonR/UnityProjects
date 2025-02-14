@@ -1,27 +1,34 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(CapsuleCollider2D))]
 public class PlayerMovement : MonoBehaviour
 {
+    #region variables
     public Transform overrideCamera;
 
     //These are classes to make them collapsable in Inspector
     public MovementClass Movement;
-    public GroundedClass Grounded;
     public ColissionClass Collision;
 
-
+    #region Movement
     float horizontalInput, verticalInput;
+    [HideInInspector] public float currentSpeed;
+    [HideInInspector] public int jumpCountAir;
+    #endregion
 
+    #region Collision
     RaycastHit2D groundedHit;
     RaycastHit2D leftHit, rightHit, topHit;
     Rigidbody2D rb;
 
-    [HideInInspector] public float currentSpeed;
-
+    Vector2 rightBot, rightTop, leftBot, leftTop, tll, bll, trr, brr, ttr, ttl, bbl, bbr;
+    #endregion
+    #endregion
 
     void Awake()
     {
@@ -30,9 +37,9 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        HandleVariables();
-        UpdateGroundedStatus();
+        CalculateRayPositions();
         UpdateColStatus();
+        HandleVariables();
         HandleJump();
     }
 
@@ -52,65 +59,47 @@ public class PlayerMovement : MonoBehaviour
             currentSpeed = Input.GetKey(KeyCode.LeftShift) ? Movement.runSpeed : Movement.walkSpeed;
         else
             currentSpeed = 0;
-    }
 
-    void UpdateGroundedStatus()
-    {
-        Vector2 tl = transform.position + new Vector3(-Grounded.groundRayWidth, Grounded.groundRayTop);
-        Vector2 tr = transform.position + new Vector3(Grounded.groundRayWidth, Grounded.groundRayTop);
-        Vector2 bl = transform.position + new Vector3(-Grounded.groundRayWidth, Grounded.groundRayBot);
-        Vector2 br = transform.position + new Vector3(Grounded.groundRayWidth, Grounded.groundRayBot);
-
-        //Raycast down, this is simple to understand
-        groundedHit = RaycastCheck(tl, br, tr, bl, Grounded.groundedMask);
-
-        //set grounded based on if collider
-        Grounded.isGrounded = groundedHit.collider != null;
+        if (rb.linearVelocity.y < 1f)
+        {
+            if (Collision.isGrounded && jumpCountAir != 0) jumpCountAir = 0;
+        }
     }
 
     void UpdateColStatus()
     {
-        Vector2 tl = transform.position + new Vector3(-Collision.baseWidth, Collision.endHeight);
-        Vector2 tr = transform.position + new Vector3(Collision.baseWidth, Collision.endHeight);
-        Vector2 bl = transform.position + new Vector3(-Collision.baseWidth, Collision.baseHeight);
-        Vector2 br = transform.position + new Vector3(Collision.baseWidth, Collision.baseHeight);
-
-        Vector2 tll = tl + new Vector2(-Collision.outLength, 0);
-        Vector2 trr = tr + new Vector2(Collision.outLength, 0);
-        Vector2 bll = bl + new Vector2(-Collision.outLength, 0);
-        Vector2 brr = br + new Vector2(Collision.outLength, 0);
-        Vector2 ttl = tl + new Vector2(0, Collision.outLength);
-        Vector2 ttr = tr + new Vector2(0, Collision.outLength);
+        //Raycast down, this is simple to understand
+        groundedHit = RaycastCheck(leftBot, bbr, rightBot, bbl, Collision.groundedMask);
 
         //Raycast in X shapes, left right and on top
-        leftHit = RaycastCheck(tl, bll, bl, tll, Collision.colissionMask);
-        rightHit = RaycastCheck(tr, brr, br, trr, Collision.colissionMask);
-        topHit = RaycastCheck(tl, ttr, tr, ttl, Collision.colissionMask);
+        leftHit = RaycastCheck(leftBot, bll, rightBot, tll, Collision.colissionMask);
+        rightHit = RaycastCheck(leftBot, brr, rightBot, trr, Collision.colissionMask);
+        topHit = RaycastCheck(leftBot, ttr, rightBot, ttl, Collision.colissionMask);
 
-        //set grounded based on if collider
+        //set onhit based on collider
         Collision.onLeft = leftHit.collider != null;
         Collision.onRight = rightHit.collider != null;
         Collision.onTop = topHit.collider != null;
-    }
-
-    RaycastHit2D RaycastCheck(Vector2 sA, Vector2 eA, Vector2 sB, Vector2 eB, LayerMask mask)
-    {
-        RaycastHit2D tempHit;
-        float dist = Vector2.Distance(sA, eA);
-
-        tempHit = Physics2D.Raycast(sA, (eA - sA).normalized, dist, mask);
-        if (tempHit.collider == null)
-            tempHit = Physics2D.Raycast(sB, (eB - sB).normalized, dist, mask);
-
-        return tempHit;
+        Collision.isGrounded = groundedHit.collider != null;
     }
 
     void HandleJump()
     {
-        if (Grounded.isGrounded)
+        if (Collision.isGrounded)
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, Movement.jumpPower);
+            }
+        }
+        else
+        {
+            if (jumpCountAir >= Movement.airJumps)
+                return;
+
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                jumpCountAir++;
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, Movement.jumpPower);
             }
         }
@@ -133,7 +122,7 @@ public class PlayerMovement : MonoBehaviour
                 break;
 
             default:    //Default
-                if (rb.linearVelocity.magnitude > 0.1f && Grounded.isGrounded)
+                if (rb.linearVelocity.magnitude > 0.1f && Collision.isGrounded)
                 {
                     rb.linearVelocity = new Vector3(rb.linearVelocity.x * .8f, rb.linearVelocity.y);
                 }
@@ -141,97 +130,102 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    #region Helpers
+    RaycastHit2D RaycastCheck(Vector2 sA, Vector2 eA, Vector2 sB, Vector2 eB, LayerMask mask)
+    {
+        RaycastHit2D tempHit;
+        float dist = Vector2.Distance(sA, eA);
 
+        tempHit = Physics2D.Raycast(sA, (eA - sA).normalized, dist, mask);
+        if (tempHit.collider == null)
+            tempHit = Physics2D.Raycast(sB, (eB - sB).normalized, dist, mask);
+
+        return tempHit;
+    }
+
+    void CalculateRayPositions()
+    {
+        // Base
+        rightBot = transform.position + new Vector3(Collision.baseWidth, Collision.baseHeight);
+        rightTop = transform.position + new Vector3(Collision.baseWidth, Collision.endHeight);
+        leftBot = transform.position + new Vector3(-Collision.baseWidth, Collision.baseHeight);
+        leftTop = transform.position + new Vector3(-Collision.baseWidth, Collision.endHeight);
+
+        // Grounded
+        bbl = transform.position + new Vector3(-Collision.baseWidth, -Collision.groundLength);
+        bbr = transform.position + new Vector3(Collision.baseWidth, -Collision.groundLength);
+
+        // Outer
+        tll = leftTop + new Vector2(-Collision.outLength, 0);
+        trr = rightTop + new Vector2(Collision.outLength, 0);
+        bll = leftBot + new Vector2(-Collision.outLength, 0);
+        brr = rightBot + new Vector2(Collision.outLength, 0);
+        ttl = leftTop + new Vector2(0, Collision.outLength);
+        ttr = rightTop + new Vector2(0, Collision.outLength);
+    }
+    #endregion
+
+    #region Gizmos
     private void OnDrawGizmosSelected()
     {
-        float outPosWidth = .066f;
-        DrawGroundRayGizmos(outPosWidth);
-        DrawColRayGizmos(outPosWidth);
+        if (!Application.isPlaying)
+        {
+            CalculateRayPositions();
+        }
+
+        DrawColRayGizmos(.066f, .1f);
     }
 
-    void DrawGroundRayGizmos(float outPosWidth)
+    void DrawColRayGizmos(float outerWidth, float innerWidth)
     {
-        Vector2 tl = transform.position + new Vector3(-Grounded.groundRayWidth, Grounded.groundRayTop);
-        Vector2 tr = transform.position + new Vector3(Grounded.groundRayWidth, Grounded.groundRayTop);
-        Vector2 bl = transform.position + new Vector3(-Grounded.groundRayWidth, Grounded.groundRayBot);
-        Vector2 br = transform.position + new Vector3(Grounded.groundRayWidth, Grounded.groundRayBot);
-
-
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(tl, .1f);
-        Gizmos.DrawWireSphere(tr, .1f);
+        Gizmos.DrawWireSphere(leftTop, innerWidth);
+        Gizmos.DrawWireSphere(leftBot, innerWidth);
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(rightTop, innerWidth);
+        Gizmos.DrawWireSphere(rightBot, innerWidth);
 
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(bl, outPosWidth);
-        Gizmos.DrawWireSphere(br, outPosWidth);
-
-
-        Gizmos.color = Color.blue;
-        Gizmos.DrawRay(tl, (br - tl).normalized * Vector2.Distance(tl, br));
-        Gizmos.DrawRay(tr, (bl - tr).normalized * Vector2.Distance(tl, br));
-    }
-
-    void DrawColRayGizmos(float outPosWidth)
-    {
-        Vector2 tl = transform.position + new Vector3(-Collision.baseWidth, Collision.endHeight);
-        Vector2 tr = transform.position + new Vector3(Collision.baseWidth, Collision.endHeight);
-        Vector2 bl = transform.position + new Vector3(-Collision.baseWidth, Collision.baseHeight);
-        Vector2 br = transform.position + new Vector3(Collision.baseWidth, Collision.baseHeight);
-
-        Vector2 tll = tl + new Vector2(-Collision.outLength, 0);
-        Vector2 trr = tr + new Vector2(Collision.outLength, 0);
-        Vector2 bll = bl + new Vector2(-Collision.outLength, 0);
-        Vector2 brr = br + new Vector2(Collision.outLength, 0);
-        Vector2 ttl = tl + new Vector2(0, Collision.outLength);
-        Vector2 ttr = tr + new Vector2(0, Collision.outLength);
-
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(tl, .1f);
-        Gizmos.DrawWireSphere(tr, .1f);
-        Gizmos.DrawWireSphere(bl, .1f);
-        Gizmos.DrawWireSphere(br, .1f);
-
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(tll, outPosWidth);
-        Gizmos.DrawWireSphere(trr, outPosWidth);
-        Gizmos.DrawWireSphere(bll, outPosWidth);
-        Gizmos.DrawWireSphere(brr, outPosWidth);
-        Gizmos.DrawWireSphere(ttl, outPosWidth);
-        Gizmos.DrawWireSphere(ttr, outPosWidth);
+        Gizmos.DrawWireSphere(tll, outerWidth);
+        Gizmos.DrawWireSphere(trr, outerWidth);
+        Gizmos.DrawWireSphere(bll, outerWidth);
+        Gizmos.DrawWireSphere(brr, outerWidth);
+        Gizmos.DrawWireSphere(ttl, outerWidth);
+        Gizmos.DrawWireSphere(ttr, outerWidth);
+        Gizmos.DrawWireSphere(bbl, outerWidth);
+        Gizmos.DrawWireSphere(bbr, outerWidth);
 
         //Left
         Gizmos.color = Color.blue;
-        Gizmos.DrawLine(tl, bll);
-        Gizmos.DrawLine(bl, tll);
-        Gizmos.DrawLine(tr, brr);
-        Gizmos.DrawLine(br, trr);
-        Gizmos.DrawLine(bl, ttr);
-        Gizmos.DrawLine(br, ttl);
-    }
+        Gizmos.DrawLine(leftTop, bll);
+        Gizmos.DrawLine(leftBot, tll);
+        Gizmos.DrawLine(rightTop, brr);
+        Gizmos.DrawLine(rightBot, trr);
+        Gizmos.DrawLine(leftBot, ttr);
+        Gizmos.DrawLine(rightBot, ttl);
 
+        Gizmos.DrawRay(leftBot, (bbr - leftBot).normalized * Vector2.Distance(leftBot, bbr));
+        Gizmos.DrawRay(rightBot, (bbl - rightBot).normalized * Vector2.Distance(rightBot, bbr));
+    }
+    #endregion
+
+    #region Classes
     [System.Serializable]
     public class MovementClass
     {
         public float walkSpeed = 4, runSpeed = 8;
         public float jumpPower = 8;
-    }
-
-    [System.Serializable]
-    public class GroundedClass
-    {
-        public float groundRayTop = .2f, groundRayBot = -.2f;
-        public float groundRayWidth = .3f;
-        public LayerMask groundedMask;
-        public bool isGrounded;
+        public int airJumps = 1; 
     }
 
     [System.Serializable]
     public class ColissionClass
     {
         public float baseHeight = .2f, endHeight = 1f;
-        public float baseWidth = .3f, outLength = .5f;
+        public float baseWidth = .3f, outLength = .5f, groundLength = .2f;
         public LayerMask colissionMask;
-        public bool onLeft, onRight, onTop;
+        public LayerMask groundedMask;
+        public bool onLeft, onRight, onTop, isGrounded;
     }
+    #endregion
 }
