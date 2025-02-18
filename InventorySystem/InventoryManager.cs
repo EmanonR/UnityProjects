@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static InventoryManager;
 
 public class InventoryManager : MonoBehaviour
 {
@@ -10,8 +9,8 @@ public class InventoryManager : MonoBehaviour
     public List<ItemSlotClass> keyItems;
     public int money;
 
-    public static event Action<Item> itemAdded;
-    public static event Action<Item> itemRemoved;
+    public static event Action<Item> ItemAdded;
+    public static event Action<Item> ItemRemoved;
 
     public void AddItem(Item itemToAdd)
     {
@@ -33,13 +32,11 @@ public class InventoryManager : MonoBehaviour
                 break;
         }
 
-        itemAdded?.Invoke(itemToAdd);
+        ItemAdded?.Invoke(itemToAdd);
     }
 
     public void RemoveItem(Item itemToRemove)
     {
-        itemRemoved?.Invoke(itemToRemove);
-
         switch (itemToRemove.itemType)
         {
             case Item.ItemType.normal:
@@ -57,40 +54,43 @@ public class InventoryManager : MonoBehaviour
             default:
                 break;
         }
+
+        ItemRemoved?.Invoke(itemToRemove);
     }
 
 
     void AddToList(List<ItemSlotClass> listToAdd, Item itemToAdd)
     {
-        //if we have itemSlots
-        if (listToAdd.Count != 0)
+        //New item slot if no slots or item is not stackable
+        if (listToAdd.Count == 0 || !itemToAdd.stackable)
         {
-            if (itemToAdd.stackable)
-                //Check for itemslot with item
-                for (int i = 0; i < listToAdd.Count; i++)
-                {
-                    //If found, increase amount in respective itemslot
-                    if (listToAdd[i].itemInList == itemToAdd)
-                    {
-                        listToAdd[i].amount++;
-                        return;
-                    }
-                }
+            //Make new itemslot and add item to it with a count of 1
+            listToAdd.Add(new ItemSlotClass()
+            {
+                amount = 1,
+                itemInList = itemToAdd
+            });
+            return;
+        }
 
-            //Make new itemslot and add item to it with a count of 1
-            ItemSlotClass newItemSlot = new ItemSlotClass();
-            newItemSlot.amount = 1;
-            newItemSlot.itemInList = itemToAdd;
-            listToAdd.Add(newItemSlot);
-        }
-        else
+        //Check for itemslot with item
+        for (int i = 0; i < listToAdd.Count; i++)
         {
-            //Make new itemslot and add item to it with a count of 1
-            ItemSlotClass newItemSlot = new ItemSlotClass();
-            newItemSlot.amount = 1;
-            newItemSlot.itemInList = itemToAdd;
-            listToAdd.Add(newItemSlot);
+            //If found, increase amount in respective itemslot
+            if (listToAdd[i].itemInList == itemToAdd)
+            {
+                listToAdd[i].amount++;
+                return;
+            }
         }
+
+        // If item slot doesnt exist
+        listToAdd.Add(new ItemSlotClass()
+        {
+            amount = 1,
+            itemInList = itemToAdd
+        });
+        return;
     }
 
     void RemoveFromList(List<ItemSlotClass> listToRemove, Item itemToRemove)
@@ -113,13 +113,12 @@ public class InventoryManager : MonoBehaviour
                 }
             }
         }
-    }
+    }    
+}
 
-
-    [System.Serializable]
-    public class ItemSlotClass
-    {
-        public Item itemInList;
-        public int amount;
-    }
+[System.Serializable]
+public class ItemSlotClass
+{
+    public Item itemInList;
+    public int amount;
 }
