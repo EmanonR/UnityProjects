@@ -19,11 +19,12 @@ public class InventoryUI : MenuManager
     {
         for (int i = 0; i < tabs.Length; i++) 
         { 
-            tabs[i].gameObject.SetActive(false);
+            tabs[i].SetActive(false);
         }
-        tabs[0].gameObject.SetActive(true);
+        tabs[0].SetActive(true);
 
-        InventoryManager.itemAdded += UpdateUI;
+        InventoryManager.ItemAdded += UpdateUI;
+        InventoryManager.ItemRemoved += UpdateUI;
     }
 
     void UpdateUI(Item item)
@@ -33,26 +34,23 @@ public class InventoryUI : MenuManager
         switch (item.itemType)
         {
             case Item.ItemType.normal:
-                //Delete All
-                DeleteAllSlotsInList(itemSlots);
-                //Add All
-                for (int i = 0; i < inventoryManager.normalItems.Count; i++)
-                {
-                    AddNewItemSlot(itemSlotParent, itemSlots, inventoryManager.normalItems[i].itemInList, inventoryManager.normalItems[i].amount);
-                }
+                UpdateItemSlots(itemSlots, inventoryManager.normalItems, itemSlotParent);
                 break;
             case Item.ItemType.keyItem:
-                //Delete All
-                DeleteAllSlotsInList(keyitemSlots);
-                //Add All
-                for (int i = 0; i < inventoryManager.keyItems.Count; i++)
-                {
-                    AddNewItemSlot(keyitemSlotParent, keyitemSlots, inventoryManager.keyItems[i].itemInList, inventoryManager.keyItems[i].amount);
-                }
+                UpdateItemSlots(keyitemSlots, inventoryManager.keyItems, keyitemSlotParent);
                 break;
             case Item.ItemType.money:
-                moneyText.text = "Money: " + inventoryManager.money.ToString();
+                UpdateMoneyUI(inventoryManager.money.ToString());
                 break;
+        }
+    }
+
+    void UpdateItemSlots(List<GameObject> slotList, List<ItemSlotClass> inventoryList, Transform listParent)
+    {
+        DeleteAllSlotsInList(slotList);
+        for (int i = 0; i < inventoryList.Count; i++)
+        {
+            AddNewItemSlot(listParent, slotList, inventoryList[i].itemInList, inventoryList[i].amount);
         }
     }
 
@@ -62,7 +60,7 @@ public class InventoryUI : MenuManager
 
         for(int i = slotList.Count -1; i >= 0; i--)
         {
-            Destroy(slotList[i].gameObject);
+            Destroy(slotList[i]);
         }
 
         slotList.Clear();
@@ -71,14 +69,24 @@ public class InventoryUI : MenuManager
     void AddNewItemSlot(Transform parent, List<GameObject> slotList, Item item, int amount)
     {
         GameObject newItemSlot = Instantiate(itemSlotPrefab, parent);
-        ItemSlot itemslot = newItemSlot.GetComponent<ItemSlot>();
+        ItemSlotScript itemslot = newItemSlot.GetComponent<ItemSlotScript>();
 
-        itemslot.UpdateUI(item.icon, item.name, amount.ToString());
+        itemslot.UpdateUI(item, amount);
 
         slotList.Add(newItemSlot);
     }
 
-    public void DissableAllEnableOne(GameObject enable)
+    public void UpdateMoneyUI(string moneyCount)
+    {
+        moneyText.text = "Money: " + moneyCount;
+    }
+
+    void RemoveItemSlot(List<GameObject> slotList, GameObject itemSlot)
+    {
+        slotList.Remove(itemSlot);
+    }
+
+    public void DissableAllTabsEnableOne(GameObject enable)
     {
         foreach (GameObject tab in tabs)
         {
