@@ -27,7 +27,9 @@ public class GameManager : MonoBehaviour
         Application.targetFrameRate = targetFPS;
         player = GameObject.FindGameObjectWithTag("Player").transform;
         inventoryManager = GetComponent<InventoryManager>();
-        pausePanel.SetActive(gamePaused);
+
+        if (pausePanel != null)
+            pausePanel.SetActive(gamePaused);
     }
 
     private void Update()
@@ -38,7 +40,9 @@ public class GameManager : MonoBehaviour
         }
 
         Time.timeScale = gamePaused ? 0f : 1f;
-        pausePanel.SetActive(gamePaused);
+
+        if (pausePanel != null)
+            pausePanel.SetActive(gamePaused);
     }
 
     public void PauseSwitch()
