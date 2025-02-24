@@ -5,12 +5,18 @@ using UnityEngine;
 [ExecuteAlways]
 public class CameraController : MonoBehaviour
 {
-    public Transform followTarget, lookAtTarget;
+    [Header("Options")]
+    public float sensitivity = 1;
+    public bool flipX, flipY;
 
+    [Header("Setup")]
+    public Transform followTarget, lookAtTarget;
     [SerializeField] float headHeight;
     [SerializeField] Vector2 lookAtOffset;
+    [Header("Zoom")]
     [Range(0, 1)]
-    [SerializeField] float zoomClosest, zoomCurrent;
+    [SerializeField] float zoomClosest;
+    [SerializeField] float zoomCurrent;
     [SerializeField] float zoomFurthest;
 
     [Header("Collision")]
@@ -48,11 +54,11 @@ public class CameraController : MonoBehaviour
 
             //Rotate
 
-            mouseX = Input.GetAxisRaw("Mouse X");
-            mouseY = Input.GetAxisRaw("Mouse Y");
+            mouseX = Input.GetAxisRaw("Mouse X") * sensitivity;
+            mouseY = Input.GetAxisRaw("Mouse Y") * sensitivity;
 
-            transform.eulerAngles += new Vector3(0, mouseX, 0);
-            transform.eulerAngles -= new Vector3(mouseY, 0, 0);
+            transform.eulerAngles += flipX ? new Vector3(0, -mouseX, 0) : new Vector3(0, mouseX, 0);
+            transform.eulerAngles += flipY ? new Vector3(mouseY, 0, 0) : new Vector3(-mouseY, 0, 0);
 
             //Calculate positions based on cameras back angle
             //farPos = headPos + new Vector3(0, 0, zoomFurthest);
