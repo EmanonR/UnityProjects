@@ -2,93 +2,196 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum BattleState { Start, PlayerTurn, EnemyTurn, Won, Lost, End }
+
 public class BattleController : MonoBehaviour
 {
+    public float enemySpawnRange, playerSpawnRange;
+
+    public Transform targetPlayer;
+    public Vector3 camOffset;
+    public Vector3 camGaze;
+
+    [Range(1, 8)]
+    public int enemyCount, playerCount;
+
     [Header("Battle Configuration")]
-    public Transform[] enemySpawnPoints;
-    public GameObject[] spawnedEnemies;
-    
+    public List<GameObject> EnemyParty;
+    public List<GameObject> PlayerParty;
+    public List<GameObject> turnOrder;
+
     [Header("Battle State")]
-    public bool battleInProgress = false;
     public int currentTurn = 0;
-    
-    private BattleLayout currentBattle;
-    
+
+    BattleLayout currentBattleLayout;
+    BattleState battleState;
+
+    Transform cam;
+
+    private void Awake()
+    {
+        cam = Camera.main.transform;
+    }
+
     public void SetupBattle(BattleLayout battleLayout)
     {
-        currentBattle = battleLayout;
-        SpawnEnemies();
+        battleState = BattleState.Start;
+        currentBattleLayout = battleLayout;
+
+        SpawnEntities();
+
         StartBattle();
+
     }
-    
-    private void SpawnEnemies()
+
+    private void Update()
     {
-        // Clear any existing enemies
-        if (spawnedEnemies != null)
-        {
-            foreach (GameObject enemy in spawnedEnemies)
-            {
-                if (enemy != null)
-                    Destroy(enemy);
-            }
-        }
-        
-        // Initialize enemies array
-        spawnedEnemies = new GameObject[currentBattle.enemies.Length];
-        
-        // Spawn each enemy at designated points
-        for (int i = 0; i < currentBattle.enemies.Length; i++)
-        {
-            if (i < enemySpawnPoints.Length)
-            {
-                GameObject enemyObject = Instantiate(
-                    currentBattle.enemies[i].enemyPrefab,
-                    enemySpawnPoints[i].position,
-                    enemySpawnPoints[i].rotation
-                );
-                
-                // Set up enemy stats
-                EnemyBattleEntity enemyEntity = enemyObject.GetComponent<EnemyBattleEntity>();
-                if (enemyEntity != null)
-                {
-                    enemyEntity.Initialize(currentBattle.enemies[i]);
-                }
-                
-                spawnedEnemies[i] = enemyObject;
-            }
-            else
-            {
-                Debug.LogWarning("Not enough spawn points for all enemies!");
-                break;
-            }
-        }
+        MoveCamToPosition();
     }
-    
+
+    void MoveCamToPosition()
+    {
+        //Move camera to first player in queue
+        cam.position = CalculateSpawnPoint(1, 1, playerSpawnRange);
+        cam.position += transform.right * camOffset.x;
+        cam.position += transform.up * camOffset.y;
+        cam.position += transform.forward * camOffset.z;
+
+        cam.LookAt(camGaze);
+    }
+
+    private void SpawnEntities()
+    {
+        // Clear Existing Entites
+        EnemyParty.Clear();
+        PlayerParty.Clear();
+
+        //Spawn Enemies
+        foreach (GameObject enemy in currentBattleLayout.enemies)
+        {
+            GameObject newEnemy = Instantiate(enemy);
+            EnemyParty.Add(newEnemy);
+        }
+
+        //Spawn Players
+        foreach (GameObject partyMem in CombatManager.instance.playerParty)
+        {
+            GameObject newPartyMem = Instantiate(partyMem);
+            PlayerParty.Add(newPartyMem);
+        }
+
+        enemyCount = EnemyParty.Count;
+        playerCount = PlayerParty.Count;
+
+        //Move entites into position
+        for (int i = 0; i < EnemyParty.Count; i++)
+        {
+            Vector3 spawnPoint = CalculateSpawnPoint(i, enemyCount, enemySpawnRange);
+            EnemyParty[i].transform.position = new Vector3(spawnPoint.z, 0, spawnPoint.x);
+        }
+
+        for (int i = 0; i < PlayerParty.Count; i++)
+        {
+            PlayerParty[i].transform.position = CalculateSpawnPoint(i, playerCount, playerSpawnRange);
+        }
+
+    }
+
     private void StartBattle()
     {
-        battleInProgress = true;
         currentTurn = 0;
-        
-        // Initialize first turn
         StartNextTurn();
     }
-    
+
     private void StartNextTurn()
     {
         currentTurn++;
         // Implement turn logic here
     }
-    
-    public void EndBattle(bool playerVictory)
+
+    public void PostBattle()
     {
-        battleInProgress = false;
-        
-        if (playerVictory)
+        switch (battleState)
         {
-            // Handle rewards, experience, etc.
+            case BattleState.Won:
+                break;
+            case BattleState.Lost:
+                break;
+            default:
+                break;
         }
-        
-        // Return to previous scene
+    }
+
+    public void EndBattle()
+    {
         CombatManager.instance.EndBattle();
+    }
+
+    Vector3 CalculateSpawnPoint(int num, int maxNum, float dist)
+    {
+        var radians = 2 * Mathf.PI / maxNum * num;
+
+        var vertical = Mathf.Sin(radians);
+        var horizontal = Mathf.Cos(radians);
+
+        var spawnDir = new Vector3(horizontal, 0, vertical);
+
+        Vector3 spawnPos = Vector3.zero + spawnDir * dist;
+
+        return spawnPos;
+    }
+
+    void CalculateTurnOrder(int turnsToCalculate)
+    {
+        turnOrder.Clear();
+
+        List<GameObject> tempList = new();
+
+        foreach (GameObject enemy in EnemyParty)
+        {
+            tempList.Add(enemy);
+        }
+
+        foreach (GameObject partyMem in PlayerParty)
+        {
+            tempList.Add(partyMem);
+        }
+
+        for (int t = 0; t < turnsToCalculate; t++)
+        {
+            for (int i = 0; i < tempList.Count; i++)
+            {
+                //Sort by highest speed
+
+                //Sort by each itteration, t * s + sCount, sCount needs to 0 out if chosen
+            }
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(Vector3.zero, enemySpawnRange);
+
+        for (int i = 0; i < enemyCount; i++)
+        {
+            Vector3 spawnPoint = CalculateSpawnPoint(i, enemyCount, enemySpawnRange);
+            Gizmos.DrawWireSphere(new Vector3(spawnPoint.z, 0, spawnPoint.x), .2f);
+        }
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(Vector3.zero, playerSpawnRange);
+        for (int i = 0; i < playerCount; i++)
+        {
+            Gizmos.DrawWireSphere(CalculateSpawnPoint(i, playerCount, playerSpawnRange), .2f);
+        }
+
+
+
+        Vector3 camPos = CalculateSpawnPoint(1, 1, playerSpawnRange) + camOffset;
+
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(camPos, 1f);
+        Gizmos.DrawWireSphere(camGaze, .3f);
     }
 }
