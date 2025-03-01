@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class BattleEntity : MonoBehaviour
 {
-    public string bio = "No description";
+    [TextArea(4,4)]
+    public string decription = "Sorry i forgot to add one :C";
     public int maxHp = 75, dmg = 5, def = 10, spd = 1;
 
     public int currentHp, speedCount;
