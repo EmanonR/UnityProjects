@@ -5,10 +5,9 @@ using UnityEngine.SceneManagement;
 
 public class CombatManager : MonoBehaviour
 {
-    public BattleType battleType;
-    
     [Header("Battle Data")]
     public BattleLayout currentBattleLayout;
+    public List<GameObject> playerParty;
     private bool returningFromBattle = false;
     
     [Header("Scene transition")]
@@ -93,9 +92,5 @@ public class CombatManager : MonoBehaviour
         }
     }
     
-    public enum BattleType
-    {
-        Standard,
-        Gauge
-    }
+    
 }
