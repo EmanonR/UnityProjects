@@ -6,6 +6,11 @@ public enum BattleState { Start, PlayerTurn, EnemyTurn, Won, Lost, End }
 
 public class BattleController : MonoBehaviour
 {
+    [Header("UI")]
+    public GameObject attackButtonPrefab;
+    public GameObject attackButtonParent;
+
+
     public float enemySpawnRange, playerSpawnRange;
 
     public Transform targetPlayer;
@@ -25,6 +30,8 @@ public class BattleController : MonoBehaviour
 
     BattleLayout currentBattleLayout;
     BattleState battleState;
+    bool playerTurn;
+    BattleEntity turnEntity;
 
     Transform cam;
 
@@ -107,6 +114,53 @@ public class BattleController : MonoBehaviour
     {
         currentTurn++;
         // Implement turn logic here
+
+        //Update all speed
+        foreach (GameObject player in PlayerParty)
+        {
+            player.GetComponent<BattleEntity>().UpdateSpeed();
+        }
+        foreach (GameObject enemy in EnemyParty)
+        {
+            enemy.GetComponent<BattleEntity>().UpdateSpeed();
+        }
+
+        GameObject turnObj = CalculateTurn();
+        turnEntity = turnObj.GetComponent<BattleEntity>();
+        playerTurn = PlayerParty.Contains(turnObj);
+
+        string attackInfo = turnObj.name + " can use attacks: ";
+        for (int i = 0; i < turnEntity.attacks.Length; i++)
+        {
+            if (i != 0)
+                attackInfo += ", ";
+
+                attackInfo += turnEntity.attacks[i].name;
+        }
+
+        print("Current turn is " + turnObj.name);
+        print(attackInfo);
+
+        //Turn decides order
+
+        if (playerTurn)
+            PlayerTurn();
+        else
+            EnemyTurn();
+    }
+
+    public void PlayerTurn()
+    {
+        //Display choices
+
+        //Await input
+    }
+
+    public void EnemyTurn()
+    {
+        //Select random attack
+
+        //Perform attack on target
     }
 
     public void PostBattle()
@@ -141,29 +195,59 @@ public class BattleController : MonoBehaviour
         return spawnPos;
     }
 
-    void CalculateTurnOrder(int turnsToCalculate)
+    GameObject CalculateTurn()
     {
         turnOrder.Clear();
 
-        List<GameObject> tempList = new();
+        int highestSpeed = PlayerParty[0].GetComponent<BattleEntity>().speedCount;
+        GameObject highestSpeedEntity = PlayerParty[0];
 
-        foreach (GameObject enemy in EnemyParty)
+        for (int i = 0; i < PlayerParty.Count; i++)
         {
-            tempList.Add(enemy);
-        }
-
-        foreach (GameObject partyMem in PlayerParty)
-        {
-            tempList.Add(partyMem);
-        }
-
-        for (int t = 0; t < turnsToCalculate; t++)
-        {
-            for (int i = 0; i < tempList.Count; i++)
+            if (PlayerParty[i].GetComponent<BattleEntity>().speedCount > highestSpeed)
             {
-                //Sort by highest speed
+                highestSpeed = PlayerParty[i].GetComponent<BattleEntity>().speedCount;
+                highestSpeedEntity = PlayerParty[i];
+            }
 
-                //Sort by each itteration, t * s + sCount, sCount needs to 0 out if chosen
+        }
+
+        for (int i = 0; i < EnemyParty.Count; i++)
+        {
+            if (EnemyParty[i].GetComponent<BattleEntity>().speedCount > highestSpeed)
+            {
+                highestSpeed = EnemyParty[i].GetComponent<BattleEntity>().speedCount;
+                highestSpeedEntity = EnemyParty[i];
+            }
+        }
+        highestSpeedEntity.GetComponent<BattleEntity>().ResetSpeed();
+        return highestSpeedEntity;
+    }
+
+    void CalculateTurnOrder(int turnsToCalculate)
+    {
+        //Not finished
+        turnOrder.Clear();
+
+        int highestSpeed = PlayerParty[0].GetComponent<BattleEntity>().speedCount;
+        GameObject highestSpeedEntity = PlayerParty[0];
+
+        for (int i = 0; i < PlayerParty.Count; i++)
+        {
+            if (PlayerParty[i].GetComponent<BattleEntity>().speedCount > highestSpeed)
+            {
+                highestSpeed = PlayerParty[i].GetComponent<BattleEntity>().speedCount;
+                highestSpeedEntity = PlayerParty[i];
+            }
+
+        }
+
+        for (int i = 0; i < EnemyParty.Count; i++)
+        {
+            if (EnemyParty[i].GetComponent<BattleEntity>().speedCount > highestSpeed)
+            {
+                highestSpeed = EnemyParty[i].GetComponent<BattleEntity>().speedCount;
+                highestSpeedEntity = EnemyParty[i];
             }
         }
     }
