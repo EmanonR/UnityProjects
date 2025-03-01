@@ -19,7 +19,7 @@ public class BattleTrigger : MonoBehaviour
     public void Update()
     {
         if (player == null) player = GameManager.instance.player;
-        if (triggered) return;
+        if (triggered || player == null) return;
 
         float distance = Vector3.Distance(player.position, transform.position);
 
