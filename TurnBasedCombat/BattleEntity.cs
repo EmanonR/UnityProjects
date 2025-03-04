@@ -13,9 +13,16 @@ public class BattleEntity : MonoBehaviour
     public Attack[] attacks;
     public List<StatusEffect> appliedEffects;
 
-    public void TakeDamage(int dmg)
+    public bool dead = false;
+
+    public bool TakeDamage(int dmg)
     {
         currentHp -= Mathf.CeilToInt(dmg / ((def + 100) / 100));
+
+        if (currentHp <= 0)
+            dead = true;
+        
+        return dead;
     }
 
     public void UpdateSpeed()
@@ -41,10 +48,5 @@ public class BattleEntity : MonoBehaviour
     public Attack GetAttack(int i)
     {
         return attacks[i];
-    }
-
-    public void Die()
-    {
-
     }
 }
