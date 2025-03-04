@@ -29,7 +29,7 @@ public class BattleTrigger : MonoBehaviour
             //Trigger Battle
             Destroy(gameObject);
 
-            CombatManager.instance.StartBattle(battle);
+            CombatManager.instance.StartBattle(battle, gameObject);
             triggered = true;
 
         }
