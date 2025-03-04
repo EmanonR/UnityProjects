@@ -1,8 +1,16 @@
-# UnityBasic3D
-Movement and Camera script
+# Unity Files and systems
+Movement script is a merge of a newer one i made and Brackeys tutorial
 
-The Camera is 100 % my own.
-Movement script is a merge of a newer one i made and Brackeys tutorial.
+
+Done for now:
+* Inventory system
+* Movement scripts
+* Camera Scripts
+
+
+Currently working on:
+* Turn based Battle System
+
 
 Definitions:
 * 2D = 2D logic
