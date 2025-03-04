@@ -14,9 +14,12 @@ public class CombatManager : MonoBehaviour
     public int battleSceneIndex;
     public Vector3 battleTriggerLocation;
     public int previousScene;
+    public GameObject enemyBattler;
     
     public static CombatManager instance;
-    
+
+    public Dictionary<GameObject, bool> enemyStatus = new Dictionary<GameObject, bool>();
+
     private void Awake()
     {
         if (instance == null)
@@ -36,9 +39,10 @@ public class CombatManager : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
     
-    public void StartBattle(BattleLayout battle)
+    public void StartBattle(BattleLayout battle, GameObject enemy)
     {
         //Save current game state
+        enemyBattler = enemy;
         battleTriggerLocation = GameManager.instance.player.position;
         currentBattleLayout = battle;
         previousScene = SceneManager.GetActiveScene().buildIndex;
@@ -91,6 +95,28 @@ public class CombatManager : MonoBehaviour
             GameManager.instance.SetPlayerLocation(battleTriggerLocation);
         }
     }
-    
-    
+
+
+    public void RegisterEnemy(GameObject enemy)
+    {
+        if (!enemyStatus.ContainsKey(enemy))
+            enemyStatus.Add(enemy, false); // False means "not defeated"
+    }
+
+    public void MarkDefeated(GameObject enemy)
+    {
+        if (enemyStatus.ContainsKey(enemy))
+            enemyStatus[enemy] = true;
+    }
+
+    public bool IsDefeated(GameObject enemy)
+    {
+        return enemyStatus.TryGetValue(enemy, out bool defeated) && defeated;
+    }
+
+    public void RemoveEnemy(GameObject enemy)
+    {
+        enemyStatus.Remove(enemy);
+    }
+
 }
