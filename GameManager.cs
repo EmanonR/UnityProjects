@@ -13,6 +13,12 @@ public class GameManager : MonoBehaviour
     public bool gamePaused;
     public GameObject pausePanel;
 
+    [Header("Global keyCodes")]
+    public KeyCode confirm = KeyCode.Z;
+    public KeyCode cancel = KeyCode.X;
+    public KeyCode hideUI = KeyCode.A;
+    public KeyCode skipText = KeyCode.LeftControl;
+
 
     public static GameManager instance;
 
