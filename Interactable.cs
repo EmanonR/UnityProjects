@@ -4,18 +4,20 @@ using UnityEngine;
 
 public class Interactable : MonoBehaviour
 {
-    public float InteractRange = 5f;
-    public Vector3 InteractOffset;
+    [SerializeField] float InteractRange = 5f;
+    [SerializeField] Vector3 InteractOffset;
+
+    [SerializeField] bool auto = false;
 
     private void Update()
     {
         Transform player = GameManager.instance.player.transform;
         if (Vector3.Distance(player.position, transform.position + InteractOffset) <= InteractRange)
         {
-            if (Input.GetKeyDown(GameManager.instance.confirm))
-            {
+            if (auto)
                 Interact();
-            }
+            else if (Input.GetKeyDown(GameManager.instance.confirm))
+                Interact();
         }
     }
 
