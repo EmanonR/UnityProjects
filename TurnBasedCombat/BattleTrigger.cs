@@ -8,6 +8,12 @@ public class BattleTrigger : Interactable
 
     public override void Interact()
     {
+        if (battle == null)
+        {
+            print("There is no battleLayout attached, attach one!");
+            return;
+        }
+
         CombatManager.instance.StartBattle(battle, gameObject);
     }
 }
