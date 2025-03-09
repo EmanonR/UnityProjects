@@ -50,7 +50,7 @@ public class DialogueManager : MonoBehaviour
                 //Update Line
                 UpdateLine();
 
-                if (Input.GetKeyDown(GameManager.instance.confirm))
+                if (Input.GetKeyDown(GameManager.instance.confirm) || Input.GetKey(GameManager.instance.skipText))
                     if (canSkip)
                         charIndex = currentLine.Length -1;
 
@@ -63,7 +63,7 @@ public class DialogueManager : MonoBehaviour
 
             case DialogueState.lineEnd:
                 //Await Input
-                if (Input.GetKeyDown(GameManager.instance.confirm))
+                if (Input.GetKeyDown(GameManager.instance.confirm) || Input.GetKey(GameManager.instance.skipText))
                     if (canSkip)
                         NewLine();
                 break;
