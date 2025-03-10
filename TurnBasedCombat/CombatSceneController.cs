@@ -7,13 +7,9 @@ using TMPro;
 public enum BattleState { Start, PlayerTurn, EnemyTurn, Won, Lost, End }
 public enum TurnState { PickingOption, ChooseTarget, End}
 
-public class BattleController : MonoBehaviour
+public class CombatSceneController : MonoBehaviour
 {
     #region variables
-
-    [Header("Inputs")]
-    public KeyCode attackButton = KeyCode.Z;
-    public KeyCode cancelButton = KeyCode.X;
 
     [Header("UI")]
     public GameObject attackButtonPrefab;
@@ -25,7 +21,8 @@ public class BattleController : MonoBehaviour
 
     public Transform targetPlayer;
     public Vector3 camOffset;
-    public Vector3 camGaze;
+    public float camTargetMoveTime = .5f;
+    public AnimationCurve MoveCurve;
 
     [Range(1, 8)]
     public int enemyCount, playerCount;
@@ -46,6 +43,8 @@ public class BattleController : MonoBehaviour
     BattleEntity turnEntity;
     Attack entityChosenAttack;
     Transform cam;
+    Vector3 camPrevPos, camNewPos, camCurPos;
+    float camTargetProg;
     bool playerTurn;
     int targetIndex;
     #endregion
@@ -60,6 +59,16 @@ public class BattleController : MonoBehaviour
     private void Update()
     {
         MoveCamToPosition();
+
+        if (camTargetProg < 1)
+        {
+            camTargetProg += Time.deltaTime / camTargetMoveTime;
+
+            float lerp = MoveCurve.Evaluate(Mathf.Clamp(camTargetProg, 0, 1));
+
+            camCurPos = Vector3.Lerp(camPrevPos, camNewPos, lerp);
+            cam.LookAt(camCurPos);
+        }
 
         if (playerTurn)
             switch (turnState)
@@ -89,12 +98,14 @@ public class BattleController : MonoBehaviour
         battleState = BattleState.Start;
         currentBattleLayout = battleLayout;
 
-        targetGraphic.gameObject.SetActive(false);
+        targetGraphic.SetActive(false);
 
         SpawnEntities();
 
         StartBattle();
 
+        camCurPos = EnemyParty[0].transform.position;
+        ChangeCameraTarget(EnemyParty[0].transform.position);
     }
     private void StartBattle()
     {
@@ -153,7 +164,6 @@ public class BattleController : MonoBehaviour
     private void StartNextTurn()
     {
         attackButtonParent.SetActive(false);
-        targetIndex = 0;
 
         if (battleState == BattleState.Lost || battleState == BattleState.Won)
         {
@@ -246,32 +256,40 @@ public class BattleController : MonoBehaviour
     #region Battle Logic
     void PlayerTargetingLogic()
     {
+        if (targetIndex > EnemyParty.Count - 1)
+        {
+            targetIndex = EnemyParty.Count - 1;
+            ChangeCameraTarget(EnemyParty[targetIndex].transform.position);
+        }
+
         if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
         {
             // Left
             if (targetIndex == 0)
                 targetIndex = EnemyParty.Count - 1;
-
             else
                 targetIndex--;
+
+            ChangeCameraTarget(EnemyParty[targetIndex].transform.position);
         }
         else if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
         {
             // Right
             if (targetIndex == EnemyParty.Count - 1)
                 targetIndex = 0;
-
             else
                 targetIndex++;
+
+            ChangeCameraTarget(EnemyParty[targetIndex].transform.position);
         }
 
-        if (Input.GetKeyDown(attackButton))
+        if (Input.GetKeyDown(GameManager.instance.confirm))
         {
             // Choose and attack
             turnState = TurnState.End;
         }
 
-        if (Input.GetKeyDown(cancelButton))
+        if (Input.GetKeyDown(GameManager.instance.cancel))
         {
             // Cancel and go back
             turnState = TurnState.PickingOption;
@@ -381,8 +399,13 @@ public class BattleController : MonoBehaviour
         cam.position += transform.right * camOffset.x;
         cam.position += transform.up * camOffset.y;
         cam.position += transform.forward * camOffset.z;
+    }
 
-        cam.LookAt(camGaze);
+    void ChangeCameraTarget(Vector3 newPosition)
+    {
+        camPrevPos = camCurPos;
+        camNewPos = newPosition;
+        camTargetProg = 0;
     }
 
     Vector3 CalculateSpawnPoint(int num, int maxNum, float dist)
@@ -482,7 +505,6 @@ public class BattleController : MonoBehaviour
 
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(camPos, 1f);
-        Gizmos.DrawWireSphere(camGaze, .3f);
     }
     #endregion
 }
