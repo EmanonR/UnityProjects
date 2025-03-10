@@ -8,7 +8,6 @@ public class CombatManager : MonoBehaviour
     [Header("Battle Data")]
     public BattleLayout currentBattleLayout;
     public List<GameObject> playerParty;
-    private bool returningFromBattle = false;
     
     [Header("Scene transition")]
     public int battleSceneIndex;
@@ -17,9 +16,6 @@ public class CombatManager : MonoBehaviour
     public GameObject enemyBattler;
     
     public static CombatManager instance;
-
-    public Dictionary<GameObject, bool> enemyStatus = new Dictionary<GameObject, bool>();
-
     private void Awake()
     {
         if (instance == null)
@@ -47,16 +43,15 @@ public class CombatManager : MonoBehaviour
         currentBattleLayout = battle;
         previousScene = SceneManager.GetActiveScene().buildIndex;
         
-        SceneManager.LoadScene(battleSceneIndex);
+        SceneManager.LoadSceneAsync(battleSceneIndex);
     }
     
     public void EndBattle()
     {
-        returningFromBattle = true;
         int previousSceneIndex = previousScene;
         currentBattleLayout = null;
         
-        SceneManager.LoadScene(previousSceneIndex);
+        SceneManager.LoadSceneAsync(previousSceneIndex);
     }
     
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -64,12 +59,6 @@ public class CombatManager : MonoBehaviour
         if (scene.buildIndex == battleSceneIndex && currentBattleLayout != null)
         {
             InitializeBattleScene();
-        }
-        
-        if (returningFromBattle && scene.buildIndex == previousScene)
-        {
-            StartCoroutine(RestorePlayerPositionAfterDelay());
-            returningFromBattle = false;
         }
     }
     
@@ -85,38 +74,4 @@ public class CombatManager : MonoBehaviour
             Debug.LogError("CombatSceneController not found in battle scene!");
         }
     }
-    
-    private IEnumerator RestorePlayerPositionAfterDelay()
-    {
-        yield return null;
-        
-        if (GameManager.instance != null)
-        {
-            GameManager.instance.SetPlayerLocation(battleTriggerLocation);
-        }
-    }
-
-
-    public void RegisterEnemy(GameObject enemy)
-    {
-        if (!enemyStatus.ContainsKey(enemy))
-            enemyStatus.Add(enemy, false); // False means "not defeated"
-    }
-
-    public void MarkDefeated(GameObject enemy)
-    {
-        if (enemyStatus.ContainsKey(enemy))
-            enemyStatus[enemy] = true;
-    }
-
-    public bool IsDefeated(GameObject enemy)
-    {
-        return enemyStatus.TryGetValue(enemy, out bool defeated) && defeated;
-    }
-
-    public void RemoveEnemy(GameObject enemy)
-    {
-        enemyStatus.Remove(enemy);
-    }
-
 }
