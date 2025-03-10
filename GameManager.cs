@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.Audio;
 
 public class GameManager : MonoBehaviour
 {
@@ -11,7 +13,14 @@ public class GameManager : MonoBehaviour
 
     [Header("Pausing")]
     public bool gamePaused;
-    public GameObject pausePanel;
+    [SerializeField] GameObject pausePanel;
+
+    [Header("Audio")]
+    [SerializeField] AudioMixer mixer;
+    [SerializeField] AudioSource musicSource;
+    [SerializeField] AudioSource sfxSource;
+    [Range(-80,0)]
+    [SerializeField] float masterVolume, musicVolume, sfxVolume;
 
     [Header("Global keyCodes")]
     public KeyCode confirm = KeyCode.Z;
@@ -24,8 +33,6 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        DontDestroyOnLoad(gameObject);
-
         if (instance == null)
         {
             instance = this;
@@ -33,12 +40,14 @@ public class GameManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+            return;
         }
 
+        DontDestroyOnLoad(gameObject);
         Application.targetFrameRate = targetFPS;
 
         if (pausePanel != null)
-            pausePanel.SetActive(gamePaused);
+            pausePanel.SetActive(false);
 
         GetComponents();
     }
@@ -64,6 +73,26 @@ public class GameManager : MonoBehaviour
 
         if (pausePanel != null)
             pausePanel.SetActive(gamePaused);
+
+        UpdateVolumeSettings();
+    }
+
+    public void ChangeMusic(AudioClip newMusic)
+    {
+        musicSource.clip = newMusic;
+    }
+
+    public void PlaySFX(AudioClip audio)
+    {
+        sfxSource.clip = audio;
+        sfxSource.Play();
+    }
+
+    void UpdateVolumeSettings()
+    {
+        mixer.SetFloat("MasterVolume", masterVolume);
+        mixer.SetFloat("MusicVolume", musicVolume);
+        mixer.SetFloat("SFXVolume", sfxVolume);
     }
 
     public void PauseSwitch()
@@ -71,7 +100,7 @@ public class GameManager : MonoBehaviour
         gamePaused = !gamePaused;
     }
 
-    public void SetPlayerLocation(Vector3 newLocation)
+    public void SetPlayerPosition(Vector3 newLocation)
     {
         playerSpawnLocation = newLocation;
 
