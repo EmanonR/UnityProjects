@@ -75,14 +75,14 @@ public class CombatManager : MonoBehaviour
     
     private void InitializeBattleScene()
     {
-        BattleController battleController = FindObjectOfType<BattleController>();
-        if (battleController != null)
+        CombatSceneController combatSceneController = FindObjectOfType<CombatSceneController>();
+        if (combatSceneController != null)
         {
-            battleController.SetupBattle(currentBattleLayout);
+            combatSceneController.SetupBattle(currentBattleLayout);
         }
         else
         {
-            Debug.LogError("BattleController not found in battle scene!");
+            Debug.LogError("CombatSceneController not found in battle scene!");
         }
     }
     
