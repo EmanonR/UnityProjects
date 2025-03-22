@@ -11,6 +11,9 @@ public class Interactable : MonoBehaviour
 
     private void Update()
     {
+        if (GameManager.instance.player == null)
+            return;
+
         Transform player = GameManager.instance.player.transform;
         if (Vector3.Distance(player.position, transform.position + InteractOffset) <= InteractRange)
         {
@@ -20,6 +23,7 @@ public class Interactable : MonoBehaviour
                 Interact();
         }
     }
+
 
     public virtual void Interact()
     {
