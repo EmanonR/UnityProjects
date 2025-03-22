@@ -8,6 +8,6 @@ public class SceneInfo : MonoBehaviour
 
     private void Start()
     {
-        GameManager.instance.ChangeMusic(SceneBGM);
+        AudioManager.instance.ChangeMusic(SceneBGM);
     }
 }
