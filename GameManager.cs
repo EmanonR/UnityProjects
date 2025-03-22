@@ -51,6 +51,17 @@ public class GameManager : MonoBehaviour
             pausePanel.SetActive(false);
 
         audioSources = GetComponentsInChildren<AudioSource>();
+        int missingSources = 2 - audioSources.Length;
+
+        if (missingSources > 0)
+        {
+            for (int i = 0; i < missingSources; i++)
+            {
+                gameObject.AddComponent<AudioSource>();
+            }
+
+            audioSources = GetComponentsInChildren<AudioSource>();
+        }
     }
 
 
