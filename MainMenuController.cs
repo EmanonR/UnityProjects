@@ -10,8 +10,13 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] public List<GameObject> panels;
     public int newGameScene = 1;
 
-    public TMP_Dropdown frameRate;
     public Button continueButton;
+
+    [Header("Settings UI")]
+    public TMP_InputField frameRateField;
+    public Slider masterVolumeSlider;
+    public Slider musicVolumeSlider;
+    public Slider sfxVolumeSlider;
 
     private void Awake()
     {
@@ -58,6 +63,8 @@ public class MainMenuController : MonoBehaviour
         //Load new game
         GameManager.instance.saveData = newData;
         SceneManager.LoadScene(newGameScene);
+
+        GameManager.instance.playerFrozen = false;
     }
 
     public void ContinueGame()
@@ -67,17 +74,18 @@ public class MainMenuController : MonoBehaviour
 
         //Load game
         GameManager.instance.saveData = loadedData;
-        SceneManager.LoadScene(newGameScene);
-    }
+        SceneManager.LoadScene(loadedData.MapIndex);
 
-    public void SaveSettings()
-    {
-        SaveSystem.SavePrefInt("TargetFPS", frameRate.value);
+        GameManager.instance.playerFrozen = false;
     }
 
     public void UpdateSettingsUI()
     {
-        frameRate.value = PlayerPrefs.GetInt("TargetFPS");
+        frameRateField.text = PlayerPrefs.GetInt("TargetFPS").ToString();
+
+        masterVolumeSlider.value = PlayerPrefs.GetFloat("MasterVolume");
+        musicVolumeSlider.value = PlayerPrefs.GetFloat("MusicVolume");
+        sfxVolumeSlider.value = PlayerPrefs.GetFloat("SfxVolume");
     }
 
     public void ChangeToPanel(int index)    
