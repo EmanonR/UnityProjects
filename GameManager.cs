@@ -1,15 +1,13 @@
 using UnityEngine;
+using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine.Audio;
 
 public class GameManager : MonoBehaviour
 {
-    public Transform player;
-
-    [Header("setup")]
+    #region variables
+    [Header("Setup")]
     public GameObject playerPrefab;
-    public Vector3 playerSpawnLocation;
-    [SerializeField] int targetFPS;
 
     [Header("Pausing")]
     public bool gamePaused;
@@ -17,8 +15,6 @@ public class GameManager : MonoBehaviour
 
     [Header("Audio")]
     [SerializeField] AudioMixer mixer;
-    [SerializeField] AudioSource musicSource;
-    [SerializeField] AudioSource sfxSource;
     [Range(-80,0)]
     [SerializeField] float masterVolume, musicVolume, sfxVolume;
 
@@ -28,8 +24,13 @@ public class GameManager : MonoBehaviour
     public KeyCode hideUI = KeyCode.A;
     public KeyCode skipText = KeyCode.LeftControl;
 
-
     public static GameManager instance;
+    [HideInInspector] public SaveData saveData;
+
+    [HideInInspector] public AudioSource[] audioSources;
+    [HideInInspector] public Transform player;
+
+    #endregion
 
     private void Awake()
     {
@@ -44,21 +45,12 @@ public class GameManager : MonoBehaviour
         }
 
         DontDestroyOnLoad(gameObject);
-        Application.targetFrameRate = targetFPS;
+        Application.targetFrameRate = PlayerPrefs.GetInt("TargetFPS");
 
         if (pausePanel != null)
             pausePanel.SetActive(false);
 
-        GetComponents();
-    }
-
-    void GetComponents()
-    {
-        // Ensure player is assigned when scene changes
-        if (player == null)
-        {
-            player = GameObject.FindGameObjectWithTag("Player").transform;
-        }
+        audioSources = GetComponentsInChildren<AudioSource>();
     }
 
 
@@ -79,13 +71,14 @@ public class GameManager : MonoBehaviour
 
     public void ChangeMusic(AudioClip newMusic)
     {
-        musicSource.clip = newMusic;
+        audioSources[0].clip = newMusic;
+        audioSources[0].Play();
     }
 
     public void PlaySFX(AudioClip audio)
     {
-        sfxSource.clip = audio;
-        sfxSource.Play();
+        audioSources[1].clip = audio;
+        audioSources[1].Play();
     }
 
     void UpdateVolumeSettings()
@@ -102,15 +95,6 @@ public class GameManager : MonoBehaviour
 
     public void SetPlayerPosition(Vector3 newLocation)
     {
-        playerSpawnLocation = newLocation;
-
-        // Ensure the player is moved after the next scene load
-        if (player == null)
-        {
-            GetComponents();
-        }
-
         player.position = newLocation;
-
     }
 }
