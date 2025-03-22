@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
-using UnityEngine.Audio;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,11 +12,6 @@ public class GameManager : MonoBehaviour
     public bool gamePaused;
     [SerializeField] GameObject pausePanel;
 
-    [Header("Audio")]
-    [SerializeField] AudioMixer mixer;
-    [Range(-80,0)]
-    [SerializeField] float masterVolume, musicVolume, sfxVolume;
-
     [Header("Global keyCodes")]
     public KeyCode confirm = KeyCode.Z;
     public KeyCode cancel = KeyCode.X;
@@ -27,7 +21,6 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
     [HideInInspector] public SaveData saveData;
 
-    [HideInInspector] public AudioSource[] audioSources;
     [HideInInspector] public Transform player;
 
     #endregion
@@ -50,18 +43,7 @@ public class GameManager : MonoBehaviour
         if (pausePanel != null)
             pausePanel.SetActive(false);
 
-        audioSources = GetComponentsInChildren<AudioSource>();
-        int missingSources = 2 - audioSources.Length;
-
-        if (missingSources > 0)
-        {
-            for (int i = 0; i < missingSources; i++)
-            {
-                gameObject.AddComponent<AudioSource>();
-            }
-
-            audioSources = GetComponentsInChildren<AudioSource>();
-        }
+        
     }
 
 
@@ -77,27 +59,9 @@ public class GameManager : MonoBehaviour
         if (pausePanel != null)
             pausePanel.SetActive(gamePaused);
 
-        UpdateVolumeSettings();
     }
 
-    public void ChangeMusic(AudioClip newMusic)
-    {
-        audioSources[0].clip = newMusic;
-        audioSources[0].Play();
-    }
-
-    public void PlaySFX(AudioClip audio)
-    {
-        audioSources[1].clip = audio;
-        audioSources[1].Play();
-    }
-
-    void UpdateVolumeSettings()
-    {
-        mixer.SetFloat("MasterVolume", masterVolume);
-        mixer.SetFloat("MusicVolume", musicVolume);
-        mixer.SetFloat("SFXVolume", sfxVolume);
-    }
+    
 
     public void PauseSwitch()
     {
