@@ -28,17 +28,6 @@ public class CameraController : MonoBehaviour
     float mouseX;
     float mouseY;
 
-    private void Awake()
-    {
-        if (followTarget || lookAtTarget != null)
-        {
-            #region setup
-            if (followTarget == null) followTarget = lookAtTarget;
-            if (lookAtTarget == null) lookAtTarget = followTarget;
-            #endregion
-        }
-    }
-
     private void LateUpdate()
     {
         if (followTarget || lookAtTarget != null)
@@ -78,6 +67,17 @@ public class CameraController : MonoBehaviour
                 transform.position = Vector3.Lerp(transform.position, zoomPos, .9f);
             }
 
+        }
+        else
+        {
+            if (followTarget == null) followTarget = lookAtTarget;
+            if (lookAtTarget == null) lookAtTarget = followTarget;
+
+            if (followTarget || lookAtTarget == null)
+            {
+                followTarget = GameManager.instance.player;
+                lookAtTarget = GameManager.instance.player;
+            }
         }
     }
 
