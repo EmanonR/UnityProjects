@@ -6,6 +6,8 @@ using UnityEngine;
 [RequireComponent(typeof(CapsuleCollider))]
 public class PlayerController : MonoBehaviour
 {
+    public bool frozen;
+
     //These are classes to make them collapsable in Inspector
     public MovementClass Movement;
     public GroundedClass Grounded;
@@ -30,6 +32,14 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (GameManager.instance.gamePaused || frozen)
+        {
+            rb.isKinematic = true;
+            return;
+        }
+
+        rb.isKinematic = false;
+
         HandleSettings();
         UpdateGroundedStatus();
         HandleJump();   
@@ -37,6 +47,9 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (frozen)
+            return;
+
         HandleMovement();
         HandleRotation();
     }
