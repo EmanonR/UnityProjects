@@ -6,7 +6,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(CapsuleCollider2D))]
-public class PlayerMovement : MonoBehaviour
+public class PlayerControllerSC : MonoBehaviour
 {
     #region variables
     public Transform overrideCamera;
@@ -215,7 +215,7 @@ public class PlayerMovement : MonoBehaviour
     {
         public float walkSpeed = 4, runSpeed = 8;
         public float jumpPower = 8;
-        public int airJumps = 1; 
+        public int airJumps = 1;
     }
 
     [System.Serializable]
