@@ -15,36 +15,38 @@ public class PlayerControllerSC3D : MonoBehaviour
     public MovementClass Movement;
     public ColissionClass Collision;
 
-    #region Movement
     float horizontalInput, verticalInput;
     [HideInInspector] public float currentSpeed;
     [HideInInspector] public int jumpCountAir;
-    #endregion
 
-    #region Collision
     RaycastHit groundedHit;
     RaycastHit leftHit, rightHit, topHit;
     Rigidbody rb;
 
     Vector2 rightBot, rightTop, leftBot, leftTop, tll, bll, trr, brr, ttr, ttl, bbl, bbr;
-    #endregion
+    SpriteRenderer spriteRen;
     #endregion
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
+
+        spriteRen = GetComponentInChildren<SpriteRenderer>();
     }
 
     void Update()
     {
         CalculateRayPositions();
-        UpdateColStatus();
         HandleVariables();
         HandleJump();
     }
 
     private void FixedUpdate()
     {
+        UpdateColStatus();
+
+        if (GameManager.playerFrozen) return;
+
         HandleMovement();
     }
 
@@ -113,12 +115,16 @@ public class PlayerControllerSC3D : MonoBehaviour
                 if (Collision.onRight) return;
                 rb.linearVelocity = new Vector2(horizontalInput * currentSpeed,
                                         rb.linearVelocity.y);
+
+                spriteRen.flipX = true;
                 break;
 
             case < 0:   //Left
                 if (Collision.onLeft) return;
                 rb.linearVelocity = new Vector2(horizontalInput * currentSpeed,
                                         rb.linearVelocity.y);
+
+                spriteRen.flipX = false;
                 break;
 
             default:    //Default
